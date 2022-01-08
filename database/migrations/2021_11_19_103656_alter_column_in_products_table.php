@@ -31,7 +31,6 @@ class AlterColumnInProductsTable extends Migration
             $table->decimal('width', 10, 2)->nullable(false)->change();
             $table->decimal('height', 10, 2)->nullable(false)->change();
             $table->decimal('length', 10, 2)->nullable(false)->change();
-
         });
     }
 }

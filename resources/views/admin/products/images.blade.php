@@ -43,8 +43,8 @@
                                 Product Images
                                 <i class="fas fa-plus"></i>
                             </a>
-                            <a href="{{ url('admin/products/'.$productID.'/add-images') }}" class="btn btn-primary float-right" role="button">
-                            </a>
+                            {{-- <a href="{{ url('admin/products/'.$productID.'/add-images') }}" class="btn btn-primary float-right" role="button">
+                            </a> --}}
                         </div>
                         {{-- @endcan --}}
                     </div>
@@ -69,7 +69,7 @@
                                 <tr align="center">
                                     {{-- <td>{{ $index+1}}</td> --}}
                                     <td>{{ $image->id ?? '' }}</td>
-                                    <td><img src="{{ asset('storage/'.$image->path)}}" style="width: 150px" alt=""></td>
+                                    <td><img src="{{ asset('storage/'.$image->small)}}" style="width: 150px" alt=""></td>
                                     <td>{{ $image->created_at ?? '' }}</td>
                                     {{-- <td>{{ $image->parent->name ?? '-' }}</td> --}}
                                     <td>

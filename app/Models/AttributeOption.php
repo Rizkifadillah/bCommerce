@@ -9,7 +9,8 @@ class AttributeOption extends Model
 {
     use HasFactory;
 
-    protected $guarded = [];
+    // protected $guarded = [];
+    protected $fillable = ['attribute_id', 'name'];
 
     public function attribute(){
         return $this->belongsTo('App\Models\Attribute');

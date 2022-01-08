@@ -30,7 +30,7 @@
                         </div>
                     </form>
                 </div>
-                {{-- @can('tag_create') --}}
+                @can('add_attributes')
                 <div class="col-md-6">
                     <a href="{{ route('attributes.create') }}" class="btn btn-primary float-right" role="button">
                         {{-- {{ trans('tags.button.create.value') }} --}}
@@ -38,7 +38,7 @@
                         <i class="fas fa-plus"></i>
                     </a>
                 </div>
-                {{-- @endcan --}}
+                @endcan
             </div>
 
             
@@ -78,21 +78,27 @@
                                     role="button">
                                     Option
                                 </a>
-                                <a href="{{ route('attributes.edit', ['attribute' => $attribute->id]) }}" class="btn btn-sm btn-info"
-                                    role="button">
-                                    Edit
-                                </a>
-                                <form class="d-inline" role="alert"
-                                    action="{{ route('attributes.destroy', ['attribute' => $attribute->id]) }}" method="POST"
-                                    alert-title="Hapus attribute" alert-message="Hapus attribute {{ $attribute->name ?? '' }}"
-                                    alert-btn-cancel="Batal" alert-btn-ok="Hapus">
+                                @can('edit_attributes')
+                                    
+                                    <a href="{{ route('attributes.edit', ['attribute' => $attribute->id]) }}" class="btn btn-sm btn-info"
+                                        role="button">
+                                        Edit
+                                    </a>
+                                @endcan
+                                @can('delete_attributes')
+                                    
+                                    <form class="d-inline" role="alert"
+                                        action="{{ route('attributes.destroy', ['attribute' => $attribute->id]) }}" method="POST"
+                                        alert-title="Hapus attribute" alert-message="Hapus attribute {{ $attribute->name ?? '' }}"
+                                        alert-btn-cancel="Batal" alert-btn-ok="Hapus">
 
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger">
-                                        Hapus
-                                    </button>
-                                </form>
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            Hapus
+                                        </button>
+                                    </form>
+                                @endcan
                                 {{-- <i class="fas fa-trash"></i> --}}
 
                             </td>

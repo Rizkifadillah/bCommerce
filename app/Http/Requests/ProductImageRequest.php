@@ -24,7 +24,7 @@ class ProductImageRequest extends FormRequest
     public function rules()
     {
         return [
-            'image' => 'required|image|mimes:png,jpg,jpeg.gif|max:2048',
+            'image' => 'required|image|mimes:png,jpg,jpeg.gif|max:4096',
         ];
     }
 }

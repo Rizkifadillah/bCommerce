@@ -1,9 +1,9 @@
 
   <aside class="main-sidebar sidebar-dark-primary elevation-4">
     <!-- Brand Logo -->
-    <a href="index3.html" class="brand-link">
+    <a href="{{ url('/')}}" class="brand-link">
       <img src="{{ asset('assets/dist/img/boxed-bg.png')}}" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
-      <span class="brand-text font-weight-light">SISpesis</span>
+      <span class="brand-text font-weight-light">SISadmin</span>
     </a>
 
     <!-- Sidebar -->
@@ -14,8 +14,18 @@
           <img src="{{ asset( Auth::user()->foto ?? 'assets/dist/img/user2-160x160.jpg')}}" class="img-circle elevation-2" alt="User Image" style="height: 30px;  width:30px;">
         </div>
         <div class="info">
-          <a href="#" class="d-block">{{ Auth::user()->name ?? ''}}</a>
+          <a href="#" class="d-block">{{ Auth::user()->first_name ?? ''}}</a>
         </div>
+
+        {{-- @php
+            $user = \App\Models\User::where('id', Auth::user()->id)->first();
+            $role = $user->roles->first()->name;
+
+            
+        @endphp
+        <div class="info">
+          <a href="#" class="d-block">{{$role ?? ''}}</a>
+        </div> --}}
       </div>
 
       <!-- SidebarSearch Form -->
@@ -33,25 +43,127 @@
               </li>
 
               <li class="nav-header">MASTER DATA</li>
-              <li class="nav-item">
-                <a href="{{ route('categories.index')}}" class="nav-link {{ set_active(['categories.index','categories.create','categories.edit','categories.show']) }}">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Categories</p>
-                </a>
-              </li>
+              @can('manage_categories')
+                
+                <li class="nav-item">
+                  <a href="{{ route('categories.index')}}" class="nav-link {{ set_active(['categories.index','categories.create','categories.edit','categories.show']) }}">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Categories</p>
+                  </a>
+                </li>
+              @endcan
+
+              
+              @can('manage_products')
               <li class="nav-item">
                 <a href="{{ route('products.index')}}" class="nav-link {{ set_active(['products.index','products.create','products.edit','products.show']) }}">
                   <i class="far fa-circle nav-icon"></i>
                   <p>Products</p>
                 </a>
               </li>
+              @endcan
 
+              @can('manage_attributes')
+                <li class="nav-item">
+                  <a href="{{ route('attributes.index')}}" class="nav-link {{ set_active([
+                    'attributes.index','attributes.create','attributes.edit','attributes.show',
+                    'attributes.option', 'attributes.addoption', 'attributes.editoption'
+                    ]) }}">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Attributes</p>
+                  </a>
+                </li>
+              @endcan
+
+              <li class="nav-header">ORDERS</li>
+              @can('manage_categories')
+                
+                <li class="nav-item">
+                  <a href="{{ route('orders.index')}}" class="nav-link {{ set_active(['orders.index','orders.create','orders.edit','orders.show']) }}">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Orders</p>
+                  </a>
+                </li>
+              @endcan
+
+              
+              @can('manage_products')
               <li class="nav-item">
-                <a href="{{ route('attributes.index')}}" class="nav-link {{ set_active(['products.index','products.create','products.edit','products.show']) }}">
+                <a href="{{ route('orders.trashed')}}" class="nav-link {{ set_active(['orders.trashed']) }}">
                   <i class="far fa-circle nav-icon"></i>
-                  <p>Attributes</p>
+                  <p>Trashed</p>
                 </a>
               </li>
+              @endcan
+
+              @can('manage_attributes')
+                <li class="nav-item">
+                  <a href="{{ route('shipments.index')}}" class="nav-link {{ set_active([
+                    'shipments.index','shipments.create','shipments.edit','shipments.show']) }}">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Shipments</p>
+                  </a>
+                </li>
+              @endcan
+
+              @can('manage_roles')
+              <li class="nav-header">REPORTS</li>
+                <li class="nav-item">
+                  <a href="{{ url('admin/reports/revenue')}}" class="nav-link {{ set_active(['roles.index','roles.create','roles.edit','roles.show']) }}">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Revenue</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{{ url('admin/reports/product')}}" class="nav-link {{ set_active(['roles.index','roles.create','roles.edit','roles.show']) }}">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Products</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{{ url('admin/reports/inventory')}}" class="nav-link {{ set_active(['roles.index','roles.create','roles.edit','roles.show']) }}">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Inventories</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{{ url('admin/reports/payment')}}" class="nav-link {{ set_active(['roles.index','roles.create','roles.edit','roles.show']) }}">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Payments</p>
+                  </a>
+                </li>
+              @endcan
+
+              <li class="nav-header">GENERAL</li>
+              @can('manage_roles')
+                <li class="nav-item">
+                  <a href="{{ url('admin/slides')}}" class="nav-link {{ set_active(['roles.index','roles.create','roles.edit','roles.show']) }}">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Slides</p>
+                  </a>
+                </li>
+              @endcan
+
+              
+              <li class="nav-header">ROLE & USER</li>
+              @can('manage_roles')
+                <li class="nav-item">
+                  <a href="{{ route('roles.index')}}" class="nav-link {{ set_active(['roles.index','roles.create','roles.edit','roles.show']) }}">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Roles</p>
+                  </a>
+                </li>
+              @endcan
+              
+              @can('manage_users')
+                <li class="nav-item">
+                  <a href="{{ route('users.index')}}" class="nav-link {{ set_active(['users.index','users.create','users.edit','users.show']) }}">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Users</p>
+                  </a>
+                </li>
+              @endcan
+
 {{-- 
               <li class="nav-item">
                 <a href="{{ route('staff.index')}}" class="nav-link {{ set_active(['staff.index','staff.create','staff.edit','staff.show']) }}">

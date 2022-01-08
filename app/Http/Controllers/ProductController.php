@@ -2,17 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use Str;
-use Stringable;
+// use Str;
 use App\Models\Product;
 // use Illuminate\Support\Str;
 use App\Models\Category;
+use App\Models\Attribute;
+use Illuminate\Support\Str;
 use App\Models\ProductImage;
 use Illuminate\Http\Request;
+
+use App\Models\AttributeOption;
+use App\Models\ProductInventory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-
 use App\Http\Requests\ProductRequest;
+use App\Models\AttributeProductValue;
 use Illuminate\Support\Facades\Session;
 use RealRashid\SweetAlert\Facades\Alert;
 use App\Http\Requests\ProductImageRequest;
@@ -21,7 +25,13 @@ class ProductController extends Controller
 {
     public function __construct()
     {
+        $this->middleware('permission:view_products', ['only' => 'index']);
+        $this->middleware('permission:add_products', ['only' => ['create', 'store']]);
+        $this->middleware('permission:edit_products', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:delete_products', ['only' => 'destroy']);
+
         $this->data['statuses'] = Product::statuses();
+        $this->data['types'] = Product::types();
     }
     /**
      * Display a listing of the resource.
@@ -42,13 +52,101 @@ class ProductController extends Controller
     public function create()
     {
         $categories = Category::orderBy('name', 'asc')->get();
+        $configurableAttributes = $this->getConfigurableAttributes();
 
         $this->data['categories'] = $categories->toArray();
-        $this->data['product'] = null;
+        $this->data['product'] = [];
         $this->data['productID'] = 0;
         $this->data['categoryIDs'] = [];
+        $this->data['configurableAttributes'] = $configurableAttributes;
 
         return view('admin.products.form',$this->data);
+    }
+
+    private function getConfigurableAttributes(){
+        return Attribute::where('is_configurable', true)->get();
+    }
+
+    private function generateAttributeCombinations($arrays)
+    {
+        $result = [[]];
+        foreach ($arrays as $property => $property_values) {
+            $tmp = [];
+            foreach ($result as $result_item) {
+                foreach ($property_values as $property_value) {
+                    $tmp[] = array_merge($result_item, array($property => $property_value));
+                }
+            }
+            $result = $tmp;
+        }
+        return $result;
+    }
+
+    private function convertVariantAsName($variant)
+    {
+        $variantName = '';
+        
+        foreach (array_keys($variant) as $key => $code) {
+            $attributeOptionID = $variant[$code];
+            $attributeOption = AttributeOption::find($attributeOptionID);
+            
+            if ($attributeOption) {
+                $variantName .= ' - ' . $attributeOption->name;
+            }
+        }
+
+        return $variantName;
+    }
+
+    private function generateProductVariants($product, $params)
+    {
+        $configurableAttributes = $this->getConfigurableAttributes();
+
+        $variantAttributes = [];
+        foreach ($configurableAttributes as $attribute) {
+            $variantAttributes[$attribute->code] = $params[$attribute->code];
+        }
+
+        
+        $variants = $this->generateAttributeCombinations($variantAttributes);
+        
+        if ($variants) {
+            foreach ($variants as $variant) {
+                $variantParams = [
+                    'parent_id' => $product->id,
+                    'user_id' => Auth::user()->id,
+                    'sku' => $product->sku . '-' .implode('-', array_values($variant)),
+                    'type' => 'simple',
+                    'name' => $product->name . $this->convertVariantAsName($variant),
+                ];
+                // echo '<pre>';
+                // print_r($variantParams);exit;
+
+                $variantParams['slug'] = Str::slug($variantParams['name']);
+
+                $newProductVariant = Product::create($variantParams);
+
+                $categoryIds = !empty($params['category_ids']) ? $params['category_ids'] : [];
+                $newProductVariant->categories()->sync($categoryIds);
+
+                $this->saveProductAttributeValues($newProductVariant, $variant);
+            }
+        }
+    }
+
+    private function saveProductAttributeValues($product, $variant)
+    {
+        foreach (array_values($variant) as $attributeOptionID) {
+            $attributeOption = AttributeOption::find($attributeOptionID);
+           
+            $attributeValueParams = [
+                'product_id' => $product->id,
+                'attribute_id' => $attributeOption->attribute_id,
+                'text_value' => $attributeOption->name,
+            ];
+         
+            AttributeProductValue::create($attributeValueParams);
+         }
     }
 
     /**
@@ -59,68 +157,30 @@ class ProductController extends Controller
      */
     public function store(ProductRequest $request)
     {
-       
-        // dd($request);
-        DB::beginTransaction();
-        try {
-            //prosess insert data
-            $products = Product::create([
-                "sku" => $request->sku,
-                "name" => $request->name,
-                "price" => $request->price,
-                "slug" => Str::slug($request->name),
-                "short_description" => $request->short_description,
-                "description" => $request->description,
-                "weight" => $request->weight,
-                "length" => $request->length,
-                "width" => $request->width,
-                "height" => $request->height,
-                "status" => $request->status,
-                "user_id" => Auth::user()->id,
-            ]);
-            // insert Table pivot
-            // $products->tags()->attach($request->tag);
-            $products->categories()->attach($request->category_ids);
+        $params = $request->except('_token');
+        $params['slug'] = Str::slug($params['name']);
+        $params['user_id'] = Auth::user()->id;
 
+        $product = DB::transaction(function() use ($params) {
+            $categoryIds = !empty($params['category_ids']) ? $params['category_ids'] : [];
+            $product = Product::create($params);
+            $product->categories()->sync($categoryIds);
+
+            if ($params['type'] == 'configurable') {
+                $this->generateProductVariants($product, $params);
+            }
+
+            // dd($product);
+            return $product;
+        });
+
+        if ($product) {
             Session::flash('success', 'Product has been saved');
-            Alert::success('success', 'berhasil menambahkan');
-
-            return redirect()->route('products.index');
-
-        } catch (\Throwable $th) {
-            //throw $th;
-            DB::rollBack();
-
-            Session::flash('error', $th->getMessage());
-            Alert::error('Error Title', 'Error Message'. $th->getMessage());
-
-            return redirect()->back();
-          
-        } finally {
-            DB::commit();
+        } else {
+            Session::flash('error', 'Product could not be saved');
         }
 
-        //mengisi semua isian default kecuali _token
-        // $params = $request->except('_token');
-        // $params['slug'] = Str::slug($params['name']);
-        // $params['user_id'] = '1';
-        // $saved = false;
-        // $saved = DB::transaction(function() use ($request) {
-        //     //save semua params ke table product
-        //     // $product = Product::create($params);
-        //     //relasi produk sesuai kategori
-        //     $product->categories()->sync($params['category_ids']);
-
-        //     return true;
-        // });
-
-        // if ($saved) {
-        //     Session::flash('success', 'Product has been saved');
-        // }else{
-        //     Session::flash('error', 'Product could not be saved');
-        // }
-        // return redirect()->route('products.index');
-        // // \dd($params);
+        return redirect('admin/products/'. $product->id .'/edit/');
     }
 
     /**
@@ -166,45 +226,47 @@ class ProductController extends Controller
      */
     public function update(ProductRequest $request, $id)
     {
+        $params = $request->except('_token');
+        $params['slug'] = Str::slug($params['name']);
+
         $product = Product::findOrFail($id);
 
-        DB::beginTransaction();
-        try {
-            //prosess insert data
-            $product->update([
-                "sku" => $request->sku,
-                "name" => $request->name,
-                "price" => $request->price,
-                "slug" => Str::slug($request->name),
-                "short_description" => $request->short_description,
-                "description" => $request->description,
-                "weight" => $request->weight,
-                "length" => $request->length,
-                "width" => $request->width,
-                "height" => $request->height,
-                "status" => $request->status,
-                "user_id" => Auth::user()->id,
-            ]);
-            //update untuk pivot bukan dengan attach tp dengan sync
-            $product->categories()->sync($request->category_ids);
+        $saved = false;
+        $saved = DB::transaction(function() use ($product, $params) {
+            $categoryIds = !empty($params['category_ids']) ? $params['category_ids'] : [];
+            $product->update($params);
+            $product->categories()->sync($categoryIds);
 
-            Session::flash('success', 'Product has been update');
-            Alert::success('success', 'berhasil update');
+            if ($product->type == 'configurable') {
+                $this->updateProductVariants($params);
+            } else {
+                ProductInventory::updateOrCreate(['product_id' => $product->id], ['qty' => $params['qty']]);
+            }
 
-            return redirect()->route('products.index');
+            return true;
+        });
 
-            } catch (\Throwable $th) {
-            //throw $th;
-            DB::rollBack();
+        if ($saved) {
+            Session::flash('success', 'Product has been saved');
+        } else {
+            Session::flash('error', 'Product could not be saved');
+        }
 
-            Session::flash('error', $th->getMessage());
-            Alert::error('Error Title', 'Error Message'. $th->getMessage());
+        return redirect('admin/products');
+    }
 
-            return redirect()->back();
-            
+     private function updateProductVariants($params)
+    {
+        if ($params['variants']) {
+            foreach ($params['variants'] as $productParams) {
+                $product = Product::find($productParams['id']);
+                $product->update($productParams);
 
-        } finally {
-            DB::commit();
+                $product->status = $params['status'];
+                $product->save();
+                
+                ProductInventory::updateOrCreate(['product_id' => $product->id], ['qty' => $productParams['qty']]);
+            }
         }
     }
 
@@ -279,17 +341,23 @@ class ProductController extends Controller
         if ($request->has('image')){
             $image = $request->file('image');
             $name = $product->slug.'_'.time();
-
             $fileName = $name . '.' . $image->getClientOriginalExtension();
 
-            $folder = '/uploads/images';
+            $folder = ProductImage::UPLOAD_DIR. '/images';
 
-            $filePath = $image->storeAs($folder, $fileName, 'public');
+            $filePath = $image->storeAs($folder. '/original', $fileName, 'public');
 
-            $params = [
-                'product_id' => $product->id,
-                'path' => $filePath,
-            ];
+            $resizedImage = $this->_resizeImage($image, $fileName, $folder);
+
+            $params = array_merge(
+				[
+					'product_id' => $product->id,
+					'path' => $filePath,
+				],
+				$resizedImage
+			);
+
+            // dd($params);
 
             if (ProductImage::create($params)) {
                 # code...
@@ -306,6 +374,58 @@ class ProductController extends Controller
         }
 
     }
+
+    /**
+	 * Resize image
+	 *
+	 * @param file   $image    raw file
+	 * @param string $fileName image file name
+	 * @param string $folder   folder name
+	 *
+	 * @return Response
+	 */
+	private function _resizeImage($image, $fileName, $folder)
+	{
+		$resizedImage = [];
+
+		$smallImageFilePath = $folder . '/small/' . $fileName;
+		$size = explode('x', ProductImage::SMALL);
+		list($width, $height) = $size;
+
+		$smallImageFile = \Image::make($image)->fit($width, $height)->stream();
+		if (\Storage::put('public/' . $smallImageFilePath, $smallImageFile)) {
+			$resizedImage['small'] = $smallImageFilePath;
+		}
+		
+		$mediumImageFilePath = $folder . '/medium/' . $fileName;
+		$size = explode('x', ProductImage::MEDIUM);
+		list($width, $height) = $size;
+
+		$mediumImageFile = \Image::make($image)->fit($width, $height)->stream();
+		if (\Storage::put('public/' . $mediumImageFilePath, $mediumImageFile)) {
+			$resizedImage['medium'] = $mediumImageFilePath;
+		}
+
+		$largeImageFilePath = $folder . '/large/' . $fileName;
+		$size = explode('x', ProductImage::LARGE);
+		list($width, $height) = $size;
+
+		$largeImageFile = \Image::make($image)->fit($width, $height)->stream();
+		if (\Storage::put('public/' . $largeImageFilePath, $largeImageFile)) {
+			$resizedImage['large'] = $largeImageFilePath;
+		}
+
+		$extraLargeImageFilePath  = $folder . '/xlarge/' . $fileName;
+		$size = explode('x', ProductImage::EXTRA_LARGE);
+		list($width, $height) = $size;
+
+		$extraLargeImageFile = \Image::make($image)->fit($width, $height)->stream();
+		if (\Storage::put('public/' . $extraLargeImageFilePath, $extraLargeImageFile)) {
+			$resizedImage['extra_large'] = $extraLargeImageFilePath;
+		}
+
+		return $resizedImage;
+	}
 
     public function imagesDelete($id){
         $image = ProductImage::findOrFail($id);

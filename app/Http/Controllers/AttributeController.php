@@ -14,6 +14,12 @@ class AttributeController extends Controller
 {
 
     public function __construct(){
+
+        $this->middleware('permission:view_attributes', ['only' => 'index']);
+        $this->middleware('permission:add_attributes', ['only' => ['create', 'store']]);
+        $this->middleware('permission:edit_attributes', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:delete_attributes', ['only' => 'destroy']);
+
         $this->data['types'] = Attribute::types();
         $this->data['booleanOptions'] = Attribute::booleanOptions();
         $this->data['validations'] = Attribute::validations();

@@ -30,7 +30,7 @@
                         </div>
                     </form>
                 </div>
-                {{-- @can('tag_create') --}}
+                @can('add_categories')
                 <div class="col-md-6">
                     <a href="{{ route('categories.create') }}" class="btn btn-primary float-right" role="button">
                         {{-- {{ trans('tags.button.create.value') }} --}}
@@ -38,7 +38,7 @@
                         <i class="fas fa-plus"></i>
                     </a>
                 </div>
-                {{-- @endcan --}}
+                @endcan
             </div>
 
             
@@ -71,24 +71,29 @@
                             <td>{{ $category->slug }}</td>
                             <td>{{ $category->parent->name ?? '-' }}</td>
                             <td>
-                                <a href="{{ route('categories.edit', ['category' => $category->id]) }}" class="btn btn-sm btn-info"
-                                    role="button">
-                                    {{-- <i class="fas fa-pen"></i> --}}
-                                    Edit
-                                </a>
+                                
+                                @can('edit_categories')
+                                    <a href="{{ route('categories.edit', ['category' => $category->id]) }}" class="btn btn-sm btn-info"
+                                        role="button">
+                                        {{-- <i class="fas fa-pen"></i> --}}
+                                        Edit
+                                    </a>
+                                @endcan
+                                
+                                @can('delete_categories')
+                                    <form class="d-inline" role="alert"
+                                        action="{{ route('categories.destroy', ['category' => $category->id]) }}" method="POST"
+                                        alert-title="Hapus category" alert-message="Hapus category {{ $category->name ?? '' }}"
+                                        alert-btn-cancel="Batal" alert-btn-ok="Hapus">
 
-                                <form class="d-inline" role="alert"
-                                    action="{{ route('categories.destroy', ['category' => $category->id]) }}" method="POST"
-                                    alert-title="Hapus category" alert-message="Hapus category {{ $category->name ?? '' }}"
-                                    alert-btn-cancel="Batal" alert-btn-ok="Hapus">
-
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger">
-                                        {{-- <i class="fas fa-trash"></i> --}}
-                                        Hapus
-                                    </button>
-                                </form>
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            {{-- <i class="fas fa-trash"></i> --}}
+                                            Hapus
+                                        </button>
+                                    </form>
+                                @endcan
 
                             </td>
                         </tr>

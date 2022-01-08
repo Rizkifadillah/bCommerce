@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
     /**
      * The attributes that are mass assignable.
@@ -18,9 +19,17 @@ class User extends Authenticatable
      * @var string[]
      */
     protected $fillable = [
-        'name',
+        'first_name',
+        'last_name',
         'email',
+        'phone',
         'password',
+        'company',
+        'address1',
+        'address2',
+        'province_id',
+        'city_id',
+        'postcode',
     ];
 
     /**
@@ -45,5 +54,10 @@ class User extends Authenticatable
 
     public function products(){
         return $this->hasMany('App\Models\Product');
+    }
+
+    public function favorites()
+    {
+        return $this->hasMany('App\Models\Favorite');
     }
 }

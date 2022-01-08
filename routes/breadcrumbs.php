@@ -97,3 +97,74 @@ Breadcrumbs::for('add_guru', function ( $trail) {
     $trail->parent('guru');
     $trail->push('Tambah guru', route('guru.create'));
 });
+
+
+
+// roles
+Breadcrumbs::for('roles', function ( $trail) {
+    $trail->push('Roles', route('roles.index'));
+});
+
+
+// categories > detail
+Breadcrumbs::for('detail_roles', function ( $trail, $role) {
+    $trail->parent('roles');
+    $trail->push('Detail', route('roles.show', ['role' => $role]));
+});
+
+
+// categories > detail > [title]
+Breadcrumbs::for('detail_roles_title', function ( $trail, $role) {
+    $trail->parent('detail_roles', $role);
+    $trail->push( $role->name, route('roles.show', ['role' => $role]));
+});
+
+
+// posts > add
+Breadcrumbs::for('add_roles', function ( $trail) {
+    $trail->parent('roles');
+    $trail->push('Add', route('roles.create'));
+});
+
+
+// categories > detail
+Breadcrumbs::for('edit_roles', function ( $trail, $role) {
+    $trail->parent('roles');
+    $trail->push('Edit', route('roles.edit', ['role' => $role]));
+});
+
+
+// categories > edit > [title]
+Breadcrumbs::for('edit_roles_title', function ( $trail, $role) {
+    $trail->parent('edit_roles', $role);
+    $trail->push( $role->name, route('roles.edit', ['role' => $role]));
+});
+
+
+
+
+// users
+Breadcrumbs::for('users', function ( $trail) {
+    $trail->push('Users', route('users.index'));
+});
+
+
+// posts > add
+Breadcrumbs::for('add_users', function ( $trail) {
+    $trail->parent('users');
+    $trail->push('Add', route('users.create'));
+});
+
+
+// categories > edit
+Breadcrumbs::for('edit_users', function ( $trail, $user) {
+    $trail->parent('users');
+    $trail->push('Edit', route('users.edit', ['user' => $user]));
+});
+
+
+// categories > edit > [title]
+Breadcrumbs::for('edit_users_title', function ( $trail, $user) {
+    $trail->parent('edit_users', $user);
+    $trail->push( $user->name, route('users.edit', ['user' => $user]));
+});

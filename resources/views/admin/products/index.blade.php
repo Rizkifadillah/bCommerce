@@ -32,11 +32,13 @@
                 </div>
                 {{-- @can('tag_create') --}}
                 <div class="col-md-6">
+                    @can('add_products')
                     <a href="{{ route('products.create') }}" class="btn btn-primary float-right" role="button">
                         {{-- {{ trans('tags.button.create.value') }} --}}
                         Tambah product
                         <i class="fas fa-plus"></i>
                     </a>
+                    @endcan
                 </div>
                 {{-- @endcan --}}
             </div>
@@ -47,13 +49,15 @@
         <div class="card-body">
             @include('admin.partials.flash', ['$errors' => $errors])
 
-            <table class="table table-bordered">
+            <table class="table table-bordered table-sm">
                 <thead>
                     <tr align="center">
                         <th>#</th>
                         <th>SKU</th>
+                        <th>Type</th>
                         <th>Nama</th>
                         <th>Price</th>
+                        <th>Stok</th>
                         <th>Status</th>
                         <th>Aksi</th>
                     </tr>
@@ -69,9 +73,19 @@
                             {{-- <td>{{ $products->firstItem() + $index }}</td> --}}
                             {{-- @endif --}}
                             <td>{{ $product->sku ?? '' }}</td>
+                            <td>{{ $product->type }}</td>
                             <td>{{ $product->name ?? '' }}</td>
                             <td>{{ $product->price ?? '' }}</td>
-                            <td>{{ $product->status ?? ''}}</td>
+                            <td>{{ $product->productInventory->qty ?? ''}}</td>
+                            <td>
+                                @if ($product->status_label() == 'active')
+                                    <a href="#" class="btn btn-sm btn-success">{{ $product->status_label() }}</a>
+                                @elseif($product->status_label() == 'inactive')
+                                    <a href="#" class="btn btn-sm btn-danger">inactive</a>
+                                @elseif($product->status_label() == 'draft')
+                                    <a href="#" class="btn btn-sm btn-warning">draft</a>
+                                @endif
+                            </td>
                             {{-- <td>{{ $product->parent->name ?? '-' }}</td> --}}
                             <td>
                                 <a href="{{ route('products.edit', ['product' => $product->id]) }}" class="btn btn-sm btn-info"
@@ -103,13 +117,13 @@
             </table>
         </div>
 
-        {{-- @if ($products->hasPages())
+        @if ($products->hasPages())
             <div class="card-footer clearfix">
                 <ul class="pagination pagination-sm m-0 float-right">
                     {{ $products->links('pagination::bootstrap-4') }}
                 </ul>
             </div>
-        @endif --}}
+        @endif
 
     </div>
 </div>

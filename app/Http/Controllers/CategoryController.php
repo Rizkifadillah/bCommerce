@@ -11,6 +11,13 @@ use Session;
 
 class CategoryController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:view_categories', ['only' => 'index']);
+        $this->middleware('permission:add_categories', ['only' => ['create', 'store']]);
+        $this->middleware('permission:edit_categories', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:delete_categories', ['only' => 'destroy']);
+    }
     /**
      * Display a listing of the resource.
      *
@@ -83,7 +90,7 @@ class CategoryController extends Controller
     {
         $category = Category::findOrFail($id);
 
-        $categories = Category::orderBy('name','asc')->get();
+        $categories = Category::where('id', '!=', $id)->orderBy('name','asc')->get();
         
         $this->data['categories'] = $categories->toArray();
         $this->data['category'] = $category;
@@ -126,7 +133,7 @@ class CategoryController extends Controller
             $category->delete();
             Session::flash('success', 'Product has been saved');
 
-            return redirect()->route('products.index');
+            return redirect()->route('categories.index');
 
         } catch (\Throwable $th) {
             //throw $th;
