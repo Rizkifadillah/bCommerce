@@ -1,10 +1,15 @@
 @extends('themes.ezone.layout')
 
 @section('content')
-<div class="breadcrumb-area pt-205 breadcrumb-padding pb-210" style="background-image: url({{ asset('themes/ezone/assets/img/bg/breadcrumb.jpg') }})">
+<div class="breadcrumb-area pt-205 breadcrumb-padding pb-210 " 
+	 style="
+	 	background-image: url({{ asset('themes/ezone/assets/img/bg/login.jpg') }}); 
+		background-size: 50%;
+		background-position: top-center;
+		">
 	<div class="container-fluid">
 		<div class="breadcrumb-content text-center">
-			<h2>Login</h2>
+			<h2 class="bg-blue">Login</h2>
 			<ul>
 				<li><a href="#">home</a></li>
 				<li>login</li>

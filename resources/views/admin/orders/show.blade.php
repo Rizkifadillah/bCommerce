@@ -50,10 +50,10 @@
               <div class="col-sm-4 invoice-col">
                 <strong><u>Shipment Address</u></strong>
                 <address>
-                    {{ $order->shipment->first_name  ?? '' }} {{ $order->shipment->last_name }}
-                    <br> {{ $order->shipment->address1 }}
-                    <br> {{ $order->shipment->address2 }}
-                    <br> Email: {{ $order->shipment->email }}
+                    {{ $order->shipment->first_name  ?? '' }} {{ $order->shipment->last_name ?? ''}}
+                    <br> {{ $order->shipment->address1 ?? ''}}
+                    <br> {{ $order->shipment->address2 ?? ''}}
+                    <br> Email: {{ $order->shipment->email ?? ''}}
                     <br> Phone: {{ $order->shipment->phone }}
                     <br> Postcode: {{ $order->shipment->postcode }}
                 </address>
